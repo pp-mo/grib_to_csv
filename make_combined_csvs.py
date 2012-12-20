@@ -152,11 +152,12 @@ def produce_csv_files(
 
 # own backup stored (for one day)
 #default_data_basepath = '/data/local/itpp/Remedy/_i_csv_winds_WO0000000037553/captured_testdata/day_0801/'
-default_data_basepath = '/data/local/itpp/Remedy/_i_csv_winds_WO0000000037553/captured_testdata/day_0924/'
+#default_data_basepath = '/data/local/itpp/Remedy/_i_csv_winds_WO0000000037553/captured_testdata/day_0924/'
 # public all-data store (bit massive!) 
 #default_data_basepath = '/data/nwp1/cfst/MOGUK/grib/'
 
-dayhours_outpath = '/net/home/h05/itpp/Remedy/_i_csv_winds_WO0000000037553/output_dayhours_v3/'
+default_data_basepath = '~/git/grib_to_csv/testdata/'
+dayhours_outpath = '~/git/grib_to_csv/testdata/output'
 
 def pairof_MOGUK_search_filepaths(date_string, n_hour, data_basepath=default_data_basepath):
     """ Construct a pair of search strings for speed,direction files. """
@@ -175,6 +176,7 @@ def do_day_hours(day_date_string, hour_numbers, basepath=None, show_plots=False)
         # get 2 filespecs to search for datafiles
         spec_strings = pairof_MOGUK_search_filepaths(day_date_string, hr)
         # for now, take **alphabetical last** of files matching target time (==latest forecast date)
+        print "spec_strings", spec_strings
         filepair = [sorted(glob.glob(spec))[-1] for spec in spec_strings]
         base_outname = "alluk_%6s_%02d_" % (day_date_string, hr)
         outdir_path=dayhours_outpath+('day_%s/' % day_date_string[-4:])
