@@ -6,6 +6,9 @@
       -- you must use glob, and then try to pick matching forecast periods ??
 """
 import csv
+import os
+import os.path
+import glob
 
 import math
 import datetime
@@ -18,9 +21,17 @@ import matplotlib.pyplot as plt
 import iris
 import iris.quickplot as qplt
 
-#details of test-data set
-testcode_basepath = '~/git/grib_to_csv/testdata/'
-testdata_filenames = ["201103200900_u1096_ng_ek07_wind0360_speed10m.grib", "201103200900_u1096_ng_ek07_wind0360_dir10m.grib"]
+# Establish code directory for relative paths.
+local_basepath = os.path.realpath(os.path.dirname(__file__))
+
+# Find test input files.
+test_data_dirpath = os.path.join(local_basepath, 'testdata')
+testfile_specs = [os.path.join(test_data_dirpath, namespec) for namespec in ['*speed*.grib', '*dir*.grib']]
+test_data_filenames = [glob.glob(filespec)[-1] for filespec in testfile_specs]
+
+# Fix test output directory.
+test_output_dirpath = os.path.sep.join((local_basepath, 'test_output'))
+test_output_filepath = os.path.sep.join((test_output_dirpath, 'test_windspeed_direction.csv'))
 
 
 # set maximum clip region to avoid some missing values in the test data
@@ -46,7 +57,7 @@ def produce_csv_files(
         region = [(-4.5, 50.0), (-2.0, 52.5)]
     region = np.array(region).flat
     if in_filenames is None:
-        in_filenames = testdata_filenames
+        in_filenames = test_data_filenames
         in_filenames = [testdata_basepath+f for f in in_filenames]
     if out_filepath is None:
         out_filepath = "./windspeed_direction.csv"
@@ -150,58 +161,57 @@ def produce_csv_files(
     print 'Done.'
 
 
-# own backup stored (for one day)
-#default_data_basepath = '/data/local/itpp/Remedy/_i_csv_winds_WO0000000037553/captured_testdata/day_0801/'
+## own backup stored (for one day)
+##default_data_basepath = '/data/local/itpp/Remedy/_i_csv_winds_WO0000000037553/captured_testdata/day_0801/'
 #default_data_basepath = '/data/local/itpp/Remedy/_i_csv_winds_WO0000000037553/captured_testdata/day_0924/'
-# public all-data store (bit massive!) 
-#default_data_basepath = '/data/nwp1/cfst/MOGUK/grib/'
-
-default_data_basepath = '~/git/grib_to_csv/testdata/'
-dayhours_outpath = '~/git/grib_to_csv/testdata/output'
-
-def pairof_MOGUK_search_filepaths(date_string, n_hour, data_basepath=default_data_basepath):
-    """ Construct a pair of search strings for speed,direction files. """
-    hr_string = "%02d" % n_hour
-    glob_spec_strs = [data_basepath + date_string + hr_string + t_s for t_s in ('*speed10mmean.grib','*dir10mmean.grib')]
-    return glob_spec_strs
-
-import glob 
-def do_day_hours(day_date_string, hour_numbers, basepath=None, show_plots=False):
-    n_plots = len(hour_numbers)
-    n_plotrows = 2 if n_plots>3 else 1 # for now
-    if show_plots:
-#        plt.interactive(True)
-        plt.figure()
-    for (i_plot, hr) in enumerate(hour_numbers):
-        # get 2 filespecs to search for datafiles
-        spec_strings = pairof_MOGUK_search_filepaths(day_date_string, hr)
-        # for now, take **alphabetical last** of files matching target time (==latest forecast date)
-        print "spec_strings", spec_strings
-        filepair = [sorted(glob.glob(spec))[-1] for spec in spec_strings]
-        base_outname = "alluk_%6s_%02d_" % (day_date_string, hr)
-        outdir_path=dayhours_outpath+('day_%s/' % day_date_string[-4:])
-        out_filepath=outdir_path+base_outname+'spd_and_dir.csv'
-        
-        if show_plots:
-            n_subplot = 100*n_plotrows + 10*((n_plots+n_plotrows-1) // n_plotrows) + i_plot+1 
-            print 'subplot : ', n_subplot 
-            plt.subplot(n_subplot)
-        produce_csv_files(
-            region=[-1000,-1000,1000,1000], 
-            in_filenames=filepair, 
-            out_filepath=out_filepath,
-            show_plot=show_plots
-        )
-    if show_plots:
-        plt.show()
+## public all-data store (bit massive!) 
+##default_data_basepath = '/data/nwp1/cfst/MOGUK/grib/'
+#
+#
+#def pairof_MOGUK_search_filepaths(date_string, n_hour, data_basepath=default_data_basepath):
+#    """ Construct a pair of search strings for speed,direction files. """
+#    hr_string = "%02d" % n_hour
+#    glob_spec_strs = [data_basepath + date_string + hr_string + t_s for t_s in ('*speed*.grib','*dir*.grib')]
+#    return glob_spec_strs
+#
+#def do_day_hours(day_date_string, hour_numbers, basepath=None, show_plots=False):
+#    n_plots = len(hour_numbers)
+#    n_plotrows = 2 if n_plots>3 else 1 # for now
+#    if show_plots:
+##        plt.interactive(True)
+#        plt.figure()
+#    for (i_plot, hr) in enumerate(hour_numbers):
+#        # get 2 filespecs to search for datafiles
+#        spec_strings = pairof_MOGUK_search_filepaths(day_date_string, hr)
+#        # for now, take **alphabetical last** of files matching target time (==latest forecast date)
+#        print "spec_strings", spec_strings
+#        filepair = [sorted(glob.glob(spec))[-1] for spec in spec_strings]
+#        base_outname = "alluk_%6s_%02d_" % (day_date_string, hr)
+#        out_filepath=dayhours_outpath+base_outname+'spd_and_dir.csv'
+#        
+#        if show_plots:
+#            n_subplot = 100*n_plotrows + 10*((n_plots+n_plotrows-1) // n_plotrows) + i_plot+1 
+#            print 'subplot : ', n_subplot 
+#            plt.subplot(n_subplot)
+#        produce_csv_files(
+#            region=[-1000,-1000,1000,1000], 
+#            in_filenames=filepair, 
+#            out_filepath=out_filepath,
+#            show_plot=show_plots
+#        )
+#    if show_plots:
+#        plt.show()
 
 if __name__ == '__main__':
     # script code
-    
-    # stored example day    
-    t = 1
-#      do_day_hours('20120801', [12,13,14,15,16,17])
 
-    do_day_hours('20120924', [7,9,11,13,15,17], show_plots=False)
-#    do_day_hours('20120925', [5,9,13,17,21], show_plots=True)
-#    do_day_hours('20120801', [9,15,21], show_plots=True)
+#    # stored example day
+#    do_day_hours('20120924', [7,9,11,13,15,17], show_plots=True)
+
+    # code test example
+    produce_csv_files(
+        region=[-1000,-1000,1000,1000], 
+        in_filenames=test_data_filenames,
+        out_filepath=test_output_filepath,
+        show_plot=False
+    )
